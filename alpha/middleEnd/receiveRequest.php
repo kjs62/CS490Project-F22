@@ -1,14 +1,16 @@
 <?php
 
-$ucid = $_POST['ucid'];
-$pass = $_POST['password'];
-$requestType = $_POST['type'];
+$data = array(
+  'ucid' => $_POST['ucid'],
+  'password' => $_POST['password'],
+  'requestType' => $_POST['requestType']
+);
 
 $ch = curl_init();
 
-curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6");
+curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/alpha/backEnd/backEndAPI.php");
 curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, "ucid=$ucid&password=$pass&type=$requestType");
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
