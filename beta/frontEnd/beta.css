@@ -1,0 +1,16 @@
+.alert-success {
+    background-color: green;
+}
+.alert-danger {
+    background-color: red;
+}
+body{
+    color: black;
+    font-size: 20px;
+}
+h1{
+    color: black;
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 40px;
+    border-bottom: 5px solid orange;
+}

@@ -1,25 +1,6 @@
 <?php
-function getDB(){
-    global $db;
-    //this function returns an existing connection or creates a new one if needed
-    //and assigns it to the $db variable
-    if(!isset($db)) {
-        try{
-            $connection_string = "mysql:host=sql1.njit.edu;dbname=kjs62;
-;charset=utf8mb4";
-            $db = new PDO($connection_string, "kjs62", "PaperFlamingo44!");
-        }
-        catch(Exception $e){
-            var_export($e);
-            $db = null;
-        }
-    }
-    return $db;
-}
-
-$db = getDB();
-
 $requestType = $_POST['requestType'];
+
 
 
 
@@ -30,12 +11,12 @@ if(strcmp($requestType, 'login') == 0)
   $data = array(
     'ucid' => $_POST['ucid'],
     'password' => $_POST['password'],
-    'requestType' => $_POST['requestType']
+    'requestType' => 'login'
   );
   
   $ch = curl_init();
   
-  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/alpha/backEnd/backEndAPI.php");
+  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
   curl_setopt($ch, CURLOPT_POST, 1);
   curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
   
@@ -47,22 +28,37 @@ if(strcmp($requestType, 'login') == 0)
   
   echo $server_output;
 }
+
 
 
 
 //For teachers, to create questions for exams
 else if(strcmp($requestType, 'createQuestion') == 0)
 {
+  $diff = 0;
+  if($_POST['difficulty'] == 'Easy')
+  {
+    $diff = 0;
+  }
+  else if($_POST['difficulty'] == 'Medium')
+  {
+    $diff = 1;
+  }
+  else if($_POST['difficulty'] == 'Hard')
+  {
+    $diff = 2;
+  }
+  
   $data = array(
-    'question' => $_POST['question'],
-    'difficulty' => $_POST['difficulty'],
+    'questionToAsk' => $_POST['question'],
+    'difficulty' => $diff,
     'topic' => $_POST['topic'],
-    'testCase1' => $_POST['testCase1'],
-    'testCase2' => $_POST['testCase2'],
-    'requestType' => $_POST['requestType']
+    'testA' => $_POST['testCase1'],
+    'testB' => $_POST['testCase2'],
+    'requestType' => 'create',
+    'specifier' => 'question'
   );
   
-  /*
   $ch = curl_init();
   
   curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
@@ -76,45 +72,45 @@ else if(strcmp($requestType, 'createQuestion') == 0)
   curl_close ($ch);
   
   echo $server_output;
-  */
-  echo json_encode($data);
 }
 
 
-//USING PERSONAL DB FOR THIS
-//For teachers, when creating an exam and need to view questions to place them into exams
+
+
+
+else if(strcmp($requestType, 'getAllQuestions') == 0)
+{
+  $data = array(
+    'questionID' => $_POST['questionID'],
+    'requestType' => 'get',
+    'specifier' => 'allQuestions'
+  );
+  
+  $ch = curl_init();
+  
+  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+  
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  
+  $server_output = curl_exec($ch);
+  
+  curl_close ($ch);
+  
+  echo $server_output;
+}
+
+
+
+
+
 else if(strcmp($requestType, 'getQuestions') == 0)
 {
-  
-  $conn = new mysqli("sql1.njit.edu", "kjs62", "PaperFlamingo44!", "kjs62");
-  $sql = "SELECT id, account_number, account_type from Accounts where id < 20 order by id ASC";
-  $result = $conn->query($sql);
-  
-  $id = array();
-  $accNum = array();
-  $accType = array();
-  
-  if ($result->num_rows > 0) {
-  // output data of each row
-    while($row = $result->fetch_assoc()) {
-      array_push($id, $row["id"]);
-      array_push($accNum, $row["account_number"]);
-      array_push($accType, $row["account_type"]);
-    }
-  }
-  $conn->close();
-  
   $data = array(
-    'id' => $id,
-    'accNum' => $accNum,
-    'accType' => $accType
-  );
-  
-  echo json_encode($data);
-  /*
-  
-  $data = array(
-    'requestType' => $_POST['requestType']
+    'questionID' => $_POST['questionID'],
+    'requestType' => 'get',
+    'specifier' => 'question'
   );
   
   $ch = curl_init();
@@ -130,18 +126,19 @@ else if(strcmp($requestType, 'getQuestions') == 0)
   curl_close ($ch);
   
   echo $server_output;
-  */
 }
+
+
 
 
 
 //For students, when taking an exam and need to view and answer question
-else if(strcmp($requestType, 'getExamQuestion') == 0)
+else if(strcmp($requestType, 'getExam') == 0)
 {
-
-/*
   $data = array(
-    'requestType' => $_POST['requestType']
+    'examID' => $_POST['examID'],
+    'requestType' => 'get',
+    'specifier' => 'exam'
   );
   
   $ch = curl_init();
@@ -157,29 +154,10 @@ else if(strcmp($requestType, 'getExamQuestion') == 0)
   curl_close ($ch);
   
   echo $server_output;
-  */
-  $examId = $_POST['examId'];
-  $conn = new mysqli("sql1.njit.edu", "kjs62", "PaperFlamingo44!", "kjs62");
-  $sql = "SELECT * from Accounts where id = $examId";
-  $result = $conn->query($sql);
-  
-  $info = array();
-  
-  if ($result->num_rows > 0) {
-  // output data of each row
-    while($row = $result->fetch_assoc()) {
-      array_push($info, $row);
-    }
-  }
-  $conn->close();
-  
-  $data = array(
-    'info' => $info
-  );
-  
-  echo json_encode($data);
   
 }
+
+
 
 
 
@@ -187,12 +165,12 @@ else if(strcmp($requestType, 'getExamQuestion') == 0)
 else if(strcmp($requestType, 'createExam') == 0)
 {
   $data = array(
-    'question' => $_POST['question'],
-    'difficulty' => $_POST['difficulty'],
-    'questionTopic' => $_POST['questionTopic'],
-    'testcase1' => $_POST['testcase1'],
-    'testcase2' => $_POST['testcase2'],
-    'requestType' => $_POST['requestType']
+    'questionID' => $_POST['questionID'],
+    'questionPoint' => $_POST['questionPoint'],
+    'examID' => $_POST['examID'],
+    'requestType' => 'create',
+    'specifier' => 'exam',
+    'examName' => $_POST['examName']
   );
   
   $ch = curl_init();
@@ -209,6 +187,147 @@ else if(strcmp($requestType, 'createExam') == 0)
   
   echo $server_output;
 }
+
+
+
+
+
+//For students, to show what exams they can take
+else if(strcmp($requestType, 'examsToBeTaken') == 0)
+{
+  $data = array(
+    'requestType' => 'get',
+    'specifier' => 'allExams'
+  );
+  
+  $ch = curl_init();
+  
+  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+  
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  
+  $server_output = curl_exec($ch);
+  
+  curl_close ($ch);
+  
+  echo $server_output;
+}
+
+
+
+
+
+//For students, to submit exam
+else if(strcmp($requestType, 'submitExam') == 0)
+{
+
+  $data = array(
+            "studentID" => (int)$_POST["studentID"],
+            "examID" => (int)$_POST["examID"],
+            "attemptID" => 1,
+            "questionID" => (int)$_POST["questionID"],
+            "questionAnswer" => $_POST["questionAnswer"],
+            "specifier" => 'examAttempt',
+            "requestType" => 'create'
+          );
+          
+  $ch = curl_init();
+  
+  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+  
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  
+  $server_output = curl_exec($ch);
+  
+  curl_close ($ch);
+  
+  echo $server_output;
+}
+
+
+
+//For both, to get all Exam attempts
+else if(strcmp($requestType, 'getExams') == 0)
+{
+  $data = array(
+    'requestType' => 'get',
+    'specifier' => 'allExamAttempts'
+  );
+  
+  $ch = curl_init();
+  
+  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+  
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  
+  $server_output = curl_exec($ch);
+  
+  curl_close ($ch);
+  
+  echo $server_output;
+}
+
+
+
+
+//For both, to get all Exam attempts
+else if(strcmp($requestType, 'allExamAttempts') == 0)
+{
+  $data = array(
+    'requestType' => 'get',
+    'specifier' => 'allExamAttempts'
+  );
+  
+  $ch = curl_init();
+  
+  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+  
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  
+  $server_output = curl_exec($ch);
+  
+  curl_close ($ch);
+  
+  echo $server_output;
+}
+
+
+
+//For teacher/grader, to get Exam attempts for a specific student and exam
+else if(strcmp($requestType, 'getExamAttempt') == 0)
+{
+  $data = array(
+    'requestType' => 'get',
+    'specifier' => 'examAttempt',
+    'studentID' => $_POST['studentID'],
+    'examID' => $_POST['examID'],
+    'attemptID' => 1
+  );
+  
+  $ch = curl_init();
+  
+  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+  
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  
+  $server_output = curl_exec($ch);
+  
+  curl_close ($ch);
+  
+  echo $server_output;
+}
+
+
 
 
 
@@ -235,57 +354,8 @@ else if(strcmp($requestType, 'teacherGradedExams') == 0)
 }
 
 
-
-//For students, to show what exams they can take
-else if(strcmp($requestType, 'examsToBeTaken') == 0)
-{
-  $data = array(
-    'requestType' => $_POST['requestType']
-  );
-  
-  $ch = curl_init();
-  
-  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
-  curl_setopt($ch, CURLOPT_POST, 1);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-  
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  
-  $server_output = curl_exec($ch);
-  
-  curl_close ($ch);
-  
-  echo $server_output;
-}
-
-
-
 //For students, to show exam scores (if released)
 else if(strcmp($requestType, 'gradedExams') == 0)
-{
-  $data = array(
-    'requestType' => $_POST['requestType']
-  );
-  
-  $ch = curl_init();
-  
-  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
-  curl_setopt($ch, CURLOPT_POST, 1);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-  
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  
-  $server_output = curl_exec($ch);
-  
-  curl_close ($ch);
-  
-  echo $server_output;
-}
-
-
-
-//For students, to submit exam
-else if(strcmp($requestType, 'submitExam') == 0)
 {
   $data = array(
     'requestType' => $_POST['requestType']
@@ -331,51 +401,253 @@ else if(strcmp($requestType, 'publishExam') == 0)
 }
 
 
+
+
+
+
 //For Teachers, to autograde exams
 else if(strcmp($requestType, 'gradeExam') == 0)
 {
-/*
-  $inputAnswers = $_POST['inputAnswers']; //CHANGE THIS WHEN VALUE IS KNOWN
-  $maxScorePerQuestion = $_POST['maxScorePerQuestion']; //CHANGE THIS WHEN VALUE IS KNOWN
+    $examID = $_POST['examID'];
+    $studentID = $_POST['studentID'];
   
-  $scorePerQuestion = array();
-  
-  
-  
-  //get Questions from Exam using QuestionIds
-  $data = array(
-      'requestType' => 'retrieveExamQuestions',
-      'examId' => $_POST['examId'] //CHANGE THIS WHEN VALUE IS KNOWN
-  );
-  $ch = curl_init();
-  
-  curl_setopt($ch, CURLOPT_URL,"https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
-  curl_setopt($ch, CURLOPT_POST, 1);
-  curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-  
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  
-  $server_output = curl_exec($ch);
-  
-  curl_close ($ch);
-  $questions = json_decode($server_output, true);
-  //
-  
-  for($i = 0; $i < QUESTION_COUNT; $i++) //CHANGE THIS WHEN VALUE IS KNOWN
-  {
-    $answer = $inputAnswers[$i];
-    $question = $questions[$i]['question'];
-    $testcase1 = $questions[$i]['testcase1'];
-    $testcase2 = $questions[$i]['testcase2'];
-  }
-  
-  
-*/
-  //$codeExecFile =  '/afs/cad.njit.edu/u/n/p/kjs62/public_html/cs490grader.py';
-  $data = array(
-    'exam' => 'cheese'
-  );
+    $data = array(
+      'requestType' => 'getExam',
+      'examID' => $examID
+    );
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://afsaccess4.njit.edu/~kjs62/CS490Project-F22/beta/middleEnd/receiveRequest.php");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    $server_output = curl_exec($ch);
+    curl_close($ch);
+    
+    $recieved_array = json_decode($server_output,true);
+    
+    $AllExamQuestions = $recieved_array['examIDRows'];
+    
+    //Lists all Question Ids in order
+    $IndividualExamIDs = array();
+    //Lists maximum points per question in order
+    $MaxGradePerQuestion = array();
+    
+    //Actual Question (including name of function!!)
+    $actualQuestionString = array();
+    //Lists testCase1
+    $testCase1Arr = array();
+    //Lists testCase2
+    $testCase2Arr = array();
+    
+    for($i = 0; $i < count($AllExamQuestions); $i++)
+    {
+      array_push($IndividualExamIDs, $AllExamQuestions[$i][1]);
+      array_push($MaxGradePerQuestion, $AllExamQuestions[$i][2]);
+      
+      $data = array(
+        'requestType' => 'getQuestions',
+        'questionID' => $IndividualExamIDs[$i]
+      );
+      
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, "https://afsaccess4.njit.edu/~kjs62/CS490Project-F22/beta/middleEnd/receiveRequest.php");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+      $server_output = curl_exec($ch);
+      curl_close($ch);
+      
+      $recieved_array = json_decode($server_output,true);
+      
+      $questionInfo = $recieved_array['questionRow'];
+      
+      array_push($actualQuestionString, $questionInfo[1]);
+      array_push($testCase1Arr, $questionInfo[4]);
+      array_push($testCase2Arr, $questionInfo[5]);
+      
+    }    
+    
+    $data = array(
+      'requestType' => 'allExamAttempts'
+    );
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://afsaccess4.njit.edu/~kjs62/CS490Project-F22/beta/middleEnd/receiveRequest.php");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    $server_output = curl_exec($ch);
+    curl_close($ch);
+    
+    $recieved_array = json_decode($server_output,true);
+    
+    $examAttempts = $recieved_array['examAttemptRows'];
+    
+    $questionAnswers = array();
+    
+    for($i = 0; $i < count($examAttempts); $i++)
+    {
+      if($examAttempts[$i][0] == $studentID)
+      {
+        if($examAttempts[$i][1] == $examID)
+        {
+          array_push($questionAnswers, $examAttempts[$i][4]);
+        }
+      }
+    }
+    
+    
+    //ACTUAL GRADING ASPECT
+    $sender = array();
+    $testFile = 'examGrade.py';
+    for($i = 0; $i < count($questionAnswers); $i++)
+    {
+      $currentPoints = $MaxGradePerQuestion[$i];
+      $functionName = explode(" ", ltrim($actualQuestionString[$i]))[4];
+      
+      $brokenDownAnswer = explode(" ", $questionAnswers[$i]);
+      $userTypedFunctionName = explode("(", $brokenDownAnswer[1]);
+      
+      $data = array(
+        'requestType' => 'update',
+        'specifier' => 'examAttempt',
+        'studentID' => $studentID,
+        'examID' => $examID,
+        'questionID' => $IndividualExamIDs[$i],
+        'attemptNum' => 1,
+        'updateColumn' => 'FunctionNamePoints',
+        'updateValue' => 5
+      );
+      
+      if($userTypedFunctionName[0] != $functionName)
+      {
+        $currentPoints = $currentPoints - 5;
+        $questionAnswers[$i] = str_replace($userTypedFunctionName[0], $functionName, $questionAnswers[$i]);
+        $data = array(
+        'requestType' => 'update',
+        'specifier' => 'examAttempt',
+        'studentID' => $studentID,
+        'examID' => $examID,
+        'questionID' => $IndividualExamIDs[$i],
+        'attemptNum' => 1,
+        'updateColumn' => 'FunctionNamePoints',
+        'updateValue' => 0
+      );
+      }
+      
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, "https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+      $server_output = curl_exec($ch);
+      curl_close($ch);
+      
+      $testCase1Call = explode(" should", $testCase1Arr[$i])[0];
+      file_put_contents($testFile, $questionAnswers[$i] . "\nprint($testCase1Call)");
+      
+      $output=null;
+      $retval=null;
+      
+      exec('python examGrade.py', $output, $retval);
+      $testCase1Answer = explode("return ", $testCase1Arr[$i])[1];
+      
+      $data = array(
+        'requestType' => 'update',
+        'specifier' => 'examAttempt',
+        'studentID' => $studentID,
+        'examID' => $examID,
+        'questionID' => $IndividualExamIDs[$i],
+        'attemptNum' => 1,
+        'updateColumn' => 'TestPointsA',
+        'updateValue' => ($MaxGradePerQuestion[$i]-5)/2
+      );
+      
+      if($output[0] != $testCase1Answer)
+      {
+        $currentPoints -= ($MaxGradePerQuestion[$i]-5)/2;
+        $data = array(
+          'requestType' => 'update',
+          'specifier' => 'examAttempt',
+          'studentID' => $studentID,
+          'examID' => $examID,
+          'questionID' => $IndividualExamIDs[$i],
+          'attemptNum' => 1,
+          'updateColumn' => 'TestPointsA',
+          'updateValue' => 0
+        );
+      }
 
-  echo json_encode($data);
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, "https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+      $server_output = curl_exec($ch);
+      curl_close($ch);
+      
+      $testCase2Call = explode(" should", $testCase2Arr[$i])[0];
+      file_put_contents($testFile, $questionAnswers[$i] . "\nprint($testCase2Call)");
+      $output=null;
+      $retval=null;
+      
+      exec('python examGrade.py', $output, $retval);
+      $testCase2Answer = explode("return ", $testCase2Arr[$i])[1];
+      
+      $data = array(
+        'requestType' => 'update',
+        'specifier' => 'examAttempt',
+        'studentID' => $studentID,
+        'examID' => $examID,
+        'questionID' => $IndividualExamIDs[$i],
+        'attemptNum' => '1',
+        'updateColumn' => 'TestPointsB',
+        'updateValue' => ($MaxGradePerQuestion[$i]-5)/2
+      );
+      
+      if($output[0] != $testCase2Answer)
+      {
+        $currentPoints -= ($MaxGradePerQuestion[$i]-5)/2;
+        $data = array(
+          'requestType' => 'update',
+          'specifier' => 'examAttempt',
+          'studentID' => $studentID,
+          'examID' => $examID,
+          'questionID' => $IndividualExamIDs[$i],
+          'attemptNum' => 1,
+          'updateColumn' => 'TestPointsB',
+          'updateValue' => 0
+        );
+      }
+
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, "https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+      $server_output = curl_exec($ch);
+      curl_close($ch);
+
+      $data = array(
+        'requestType' => 'update',
+        'specifier' => 'examAttempt',
+        'studentID' => $studentID,
+        'examID' => $examID,
+        'questionID' => $IndividualExamIDs[$i],
+        'attemptNum' => '1',
+        'updateColumn' => 'AutogradePoints',
+        'updateValue' => $currentPoints
+      );
+      
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, "https://afsaccess4.njit.edu/~sgs6/CS490Project-F22/beta/backEnd/backEndAPI.php");
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+      $server_output = curl_exec($ch);
+      curl_close($ch);
+      array_push($sender, $data);
+    }
 }
 ?>
